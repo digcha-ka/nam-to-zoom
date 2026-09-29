@@ -1,0 +1,17 @@
+.tooling/
+.vs/
+**/bin/
+**/obj/
+**/__pycache__/
+**/*.py[cod]
+reference/nam_a2/build-core-ninja/
+Backup/
+dist/
+release/templates/
+n2z-bank-*/
+*.ZD2
+*.ZIC
+*.out
+*.user
+*.suo
+*.log

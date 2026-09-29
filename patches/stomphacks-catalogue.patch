@@ -1,0 +1,13 @@
+diff --git a/zoom-zt2/zoomzt2.py b/zoom-zt2/zoomzt2.py
+--- a/zoom-zt2/zoomzt2.py
++++ b/zoom-zt2/zoomzt2.py
+@@ -28,7 +28,8 @@
+     "effect" / PaddedString(12, "ascii"),
+     Const(b"\x00"),
+     "version" / PaddedString(4, "ascii"),
+-    Const(b"\x00"),
++    # Official-tool catalogues can set this byte; preserve it on edits.
++    "catalog_flags" / Default(Byte, 0),
+     "installed" / Default(Byte, 1),     # "Guitar Lab additional effects" = 0
+     "id" / Int32ul,
+     "group" / Computed((this.id & 0xFF000000) >> 24),

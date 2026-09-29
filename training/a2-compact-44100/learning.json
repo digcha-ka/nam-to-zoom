@@ -1,0 +1,17 @@
+{
+  "train_dataloader": {
+    "batch_size": 16,
+    "shuffle": true,
+    "pin_memory": true,
+    "drop_last": true,
+    "num_workers": 0
+  },
+  "val_dataloader": {},
+  "trainer": {
+    "accelerator": "gpu",
+    "devices": 1,
+    "max_epochs": 100,
+    "enable_progress_bar": false
+  },
+  "trainer_fit_kwargs": {}
+}
