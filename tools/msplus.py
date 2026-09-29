@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only command line access to a Zoom MS-50G+ pedal."""
+"""Read-only command line access to supported Zoom MS Plus pedals."""
 
 from __future__ import annotations
 
@@ -17,7 +17,8 @@ from msplus_midi import (
     list_ports,
     open_default_device,
 )
-from msplus_protocol import MS50G_PLUS_DEVICE, ProtocolError
+from msplus_protocol import MS_PLUS_DEVICE, ProtocolError
+from nam2zoom.devices import require_supported_device
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -87,7 +88,7 @@ def run_command(args: argparse.Namespace, pedal: ReadOnlyMSPlus) -> int:
         return 0
 
     identity = pedal.identify()
-    _require_ms50g_plus(identity.family_code)
+    _require_supported(identity)
     pedal.enable_pc_mode()
 
     if args.command == "patch-info":
@@ -207,11 +208,17 @@ def print_identity(identity) -> None:
     print(f"Version: {identity.version}")
 
 
-def _require_ms50g_plus(family_code: int) -> None:
-    if family_code != MS50G_PLUS_DEVICE:
+def _require_supported(identity) -> None:
+    if identity.family_code != MS_PLUS_DEVICE:
         raise ProtocolError(
-            f"Refusing MS-50G+ commands for identity family 0x{family_code:04x}"
+            f"Refusing MS Plus commands for identity family 0x{identity.family_code:04x}"
         )
+    try:
+        require_supported_device(
+            identity.family_code, identity.model_number, identity.version
+        )
+    except ValueError as exc:
+        raise ProtocolError(str(exc)) from exc
 
 
 def _refuse_existing(path: Path) -> None:

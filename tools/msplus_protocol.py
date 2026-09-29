@@ -11,8 +11,10 @@ import zlib
 
 
 ZOOM_MANUFACTURER = 0x52
-MS50G_PLUS_DEVICE = 0x6E
-ZOOM_PREFIX = bytes((ZOOM_MANUFACTURER, 0x00, MS50G_PLUS_DEVICE))
+MS_PLUS_DEVICE = 0x6E
+# Kept for third-party callers that imported the old, overly specific name.
+MS50G_PLUS_DEVICE = MS_PLUS_DEVICE
+ZOOM_PREFIX = bytes((ZOOM_MANUFACTURER, 0x00, MS_PLUS_DEVICE))
 IDENTITY_REQUEST = bytes((0x7E, 0x7F, 0x06, 0x01))
 
 
@@ -41,7 +43,7 @@ class DataBlock:
     checksum: int
 
 
-def zoom_command(*body: int, device_id: int = MS50G_PLUS_DEVICE) -> bytes:
+def zoom_command(*body: int, device_id: int = MS_PLUS_DEVICE) -> bytes:
     payload = bytes((ZOOM_MANUFACTURER, 0x00, device_id, *body))
     _require_7bit(payload, "SysEx command")
     return payload

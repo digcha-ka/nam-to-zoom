@@ -10,7 +10,7 @@ from typing import Callable
 
 from msplus_protocol import (
     IDENTITY_REQUEST,
-    MS50G_PLUS_DEVICE,
+    MS_PLUS_DEVICE,
     ZOOM_PREFIX,
     DataBlock,
     Identity,
@@ -149,7 +149,7 @@ class MidiExchange(AbstractContextManager["MidiExchange"]):
 class ReadOnlyMSPlus(AbstractContextManager["ReadOnlyMSPlus"]):
     """High-level operations with no upload, delete, or mutation methods."""
 
-    def __init__(self, transport: MidiExchange, device_id: int = MS50G_PLUS_DEVICE):
+    def __init__(self, transport: MidiExchange, device_id: int = MS_PLUS_DEVICE):
         self.transport = transport
         self.device_id = device_id
         self.pc_mode = False

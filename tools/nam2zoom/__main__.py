@@ -34,7 +34,7 @@ def main() -> int:
     bank.add_argument("--output", type=Path, required=True)
     bank.add_argument("--prepare-only", action="store_true")
 
-    install = sub.add_parser("install-bank", help="guarded MS-50G+ replacement")
+    install = sub.add_parser("install-bank", help="guarded MS Plus bank replacement")
     install.add_argument("effect", type=Path)
     install.add_argument("--session", type=Path, required=True)
     install.add_argument("--no-backup", action="store_true")
@@ -42,7 +42,7 @@ def main() -> int:
     install.add_argument("--approved-zic-sha256", required=True)
     install.add_argument("--ack-risk", action="store_true")
 
-    uninstall = sub.add_parser("uninstall-bank", help="guarded MS-50G+ bank removal")
+    uninstall = sub.add_parser("uninstall-bank", help="guarded MS Plus bank removal")
     uninstall.add_argument("--session", type=Path, required=True)
     uninstall.add_argument("--no-backup", action="store_true")
     uninstall.add_argument("--ack-risk", action="store_true")

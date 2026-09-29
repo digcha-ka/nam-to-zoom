@@ -120,7 +120,7 @@ if ($TrainingWheel) {
 Copy-Item -LiteralPath (Join-Path $root 'release/training-constraints.txt') -Destination $runtime
 New-Item -ItemType File -Path (Join-Path $runtime 'portable.marker') | Out-Null
 $env:PYTHONPATH = Join-Path $payload 'tools'
-Run (Join-Path $runtime 'python313/python.exe') @('-c', 'import mido, rtmidi, construct; from nam2zoom.template import fill_template; print("Portable backend imports OK")')
+Run (Join-Path $runtime 'python313/python.exe') @('-c', "import mido, rtmidi, construct; from nam2zoom.template import fill_template; print('Portable backend imports OK')")
 Run (Join-Path $runtime 'python312/python.exe') @('-m', 'venv', (Join-Path $work 'venv-smoke'))
 Compress-Archive -LiteralPath $payload -DestinationPath (Join-Path $dist "$name.zip")
 Write-Host "Portable preview ZIP: $(Join-Path $dist "$name.zip")"

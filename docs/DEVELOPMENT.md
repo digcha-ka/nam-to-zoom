@@ -5,7 +5,7 @@ portable app should follow [User Guide](USER_GUIDE.md); they do not need the
 developer prerequisites or `setup.ps1`.
 
 Windows desktop source project for converting up to five Neural Amp Modeler
-(`.nam`) files into **one** Zoom MS-50G+ effect, `N2ZBANK`.
+(`.nam`) files into **one** Zoom MS Plus effect, `N2ZBANK`.
 The five model slots are selected with the effect's **Model** control. The
 other controls are **Bass, Mid, Treble, Vol, Input, Mix**. Pedal labels are unique
 ASCII strings of at most five characters.
@@ -17,14 +17,17 @@ measured CPU percentage. It is validated only for the combinations described
 below, not every six-effect patch.
 
 This is a source project, not a prebuilt portable release. Building and
-converting NAM files require the tools below. Pedal installation has only
-been hardware-auditioned on an MS-50G+ running firmware **1.40**. Custom
+converting NAM files require the tools below. N2Z Bank has only been
+hardware-auditioned on an MS-50G+ running firmware **1.40**. MS-70CDR+
+firmware **1.20** installation support is experimental and based on the shared
+MS Plus protocol plus upstream custom-effect testing. Custom
 effects can freeze or permanently disable a pedal; guarded checks reduce
 risk but do not remove it.
 
 ## Requirements (Windows)
 
-- Windows 10/11 x64; Zoom MS-50G+ **firmware 1.40** for pedal installation.
+- Windows 10/11 x64; Zoom MS-50G+ **firmware 1.40**, or experimentally Zoom
+  MS-70CDR+ **firmware 1.20**, for pedal installation.
 - Install the [.NET 10 SDK](https://learn.microsoft.com/en-us/dotnet/core/install/windows)
   (the SDK includes the runtime),
   [Git for Windows](https://git-scm.com/install/windows) (including Git Bash),
@@ -157,7 +160,8 @@ can be large, and must not be committed.
    with only the selected model processed at a time. Every build uses the
    optimized 3-channel kernel and the 150 load declaration.
 6. **Build + Install** builds first, then separately asks for approval of the
-   exact SHA-256 hashes. It supports MS-50G+ firmware 1.40 only. Read the
+   exact SHA-256 hashes. It accepts only MS-50G+ firmware 1.40 or MS-70CDR+
+   firmware 1.20 and selects the profile from the identity response. Read the
    safety section below before using it.
 
 The student has **659 float32 weights per model**. Five slots therefore store
@@ -173,8 +177,8 @@ The app's training epochs affect PC conversion, not pedal processing cost.
 
 To install from the desktop app:
 
-1. Connect and power the MS-50G+ with a USB data cable. Confirm Windows sees
-   its MIDI port. On the pedal, turn autosave **OFF**, select a stock patch,
+1. Connect and power a supported MS-50G+ or MS-70CDR+ with a USB data cable.
+   Confirm Windows sees its MIDI port. On the pedal, turn autosave **OFF**, select a stock patch,
    and make sure no saved patch contains any custom effect. In particular,
    erase a saved N2Z Bank patch before replacing or uninstalling the bank.
    Do not run another pedal editor or MIDI application at the same time.

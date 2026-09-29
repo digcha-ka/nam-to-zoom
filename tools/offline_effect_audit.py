@@ -71,7 +71,7 @@ def audit_bytes(
     if zd2.target not in (0x80, 0x90):
         errors.append(f"ZD2 target 0x{zd2.target:08x} is not observed on this MS Plus backup")
     if [chunk.tag for chunk in zd2.chunks] != CHUNKS:
-        errors.append("ZD2 chunk sequence differs from the MS-50G+ corpus")
+        errors.append("ZD2 chunk sequence differs from the reviewed MS Plus corpus")
     if zd2.group != (zd2.effect_id >> 24):
         errors.append("effect ID group byte does not match ZD2 group")
     if not 0x07000F01 <= zd2.effect_id <= 0x07000FEF:

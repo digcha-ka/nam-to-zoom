@@ -1040,7 +1040,7 @@ internal sealed class MainForm : Form
         if (!uninstallButton.Enabled) return;
         var fullBackup = backupCheck.Checked;
         var confirmation = MessageBox.Show(this,
-            "Remove N2Z Bank from the connected MS-50G+? The app will verify the pedal, "
+            "Remove N2Z Bank from the connected supported MS Plus pedal? The app will verify the pedal, "
             + "autosave setting, all saved patches, and the installed effect before writing. "
             + (fullBackup
                 ? "A full device backup will be saved beside the app EXE. "
@@ -1221,6 +1221,8 @@ internal sealed class MainForm : Form
                       + "If installation fails, there will be no complete pedal backup. ")
                 + "An existing N2Z Bank will be uninstalled first. "
                 + "It will refuse if the current or any saved patch contains a non-stock effect.\n\n"
+                + "Supported targets are MS-50G+ firmware 1.40 and MS-70CDR+ firmware 1.20. "
+                + "The bank has been hardware-tested on MS-50G+ only; MS-70CDR+ support is experimental.\n\n"
                 + (irLevelChanges.Count > 0
                     ? "Cab IR level reduction to avoid clipping: "
                       + string.Join(", ", irLevelChanges) + ". Expect a lower output level.\n\n"

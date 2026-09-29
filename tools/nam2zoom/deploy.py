@@ -1,4 +1,4 @@
-"""Guarded MS-50G+ bank replacement through the Stomphacks DIY installer."""
+"""Guarded MS Plus bank replacement through the Stomphacks DIY installer."""
 
 from __future__ import annotations
 
@@ -11,13 +11,14 @@ import sys
 import tempfile
 import re
 
+from .devices import DeviceProfile, require_supported_device
+
 
 ROOT = Path(__file__).resolve().parents[2]
 STOMP = ROOT / ".tooling/stomphacks"
 BANK_NAME = "N2ZBANK.ZD2"
 BANK_ICON = "N2ZBANK.ZIC"
 BANK_ID = 0x07000F87
-FIRMWARE = "1.40"
 
 
 class DeployError(RuntimeError):
@@ -98,13 +99,38 @@ def require_stock_patch(path: Path) -> None:
                           "select/save stock-only patches before installing")
 
 
-def require_stock_patches(current: Path, backup: Path) -> None:
+def require_stock_patches(current: Path, backup: Path, expected_count: int) -> None:
     require_stock_patch(current)
     patches = sorted((backup / "patches").glob("*.zptc"))
-    if len(patches) != 100:
-        raise DeployError("backup does not contain exactly 100 saved patches")
+    if len(patches) != expected_count:
+        raise DeployError(
+            f"backup does not contain exactly {expected_count} saved patches"
+        )
     for path in patches:
         require_stock_patch(path)
+
+
+def _profile(family_code: object, model_number: object, version: object) -> DeviceProfile:
+    if not isinstance(family_code, int) or not isinstance(model_number, int) \
+            or not isinstance(version, str):
+        raise DeployError("pedal identity is incomplete or malformed")
+    try:
+        return require_supported_device(family_code, model_number, version)
+    except ValueError as exc:
+        raise DeployError(str(exc)) from exc
+
+
+def _profile_from_identify(output: str) -> DeviceProfile:
+    fields = {}
+    for name in ("Family", "Model"):
+        match = re.search(rf"^{name}: 0x([0-9a-f]+)\s*$", output, re.I | re.M)
+        if match is None:
+            raise DeployError(f"pedal identity response lacks {name.lower()}")
+        fields[name] = int(match.group(1), 16)
+    version = re.search(r"^Version: ([!-~]+)\s*$", output, re.M)
+    if version is None:
+        raise DeployError("pedal identity response lacks firmware version")
+    return _profile(fields["Family"], fields["Model"], version.group(1))
 
 
 def plan_backup(effect: Path | None, icon: Path | None,
@@ -119,11 +145,13 @@ def plan_backup(effect: Path | None, icon: Path | None,
             raise DeployError("new N2ZBANK file has an unexpected effect ID or name")
     manifest = json.loads((backup / "manifest.json").read_text(encoding="utf-8"))
     identity = manifest.get("identity", {})
-    if (identity.get("family_code"), identity.get("model_number"),
-            identity.get("version")) != (110, 35, FIRMWARE):
-        raise DeployError("backup is not from a reviewed MS-50G+ firmware 1.40")
+    profile = _profile(
+        identity.get("family_code"), identity.get("model_number"),
+        identity.get("version")
+    )
+    print(f"Detected {profile.name} firmware {profile.firmware}.", flush=True)
     installed, names, flst_path = load_backup(backup)
-    require_stock_patches(current, backup)
+    require_stock_patches(current, backup, profile.patch_count)
     legacy = sorted(name for name in installed if name.startswith("N2Z")
                     and name != BANK_NAME)
     if legacy:
@@ -166,17 +194,17 @@ def plan_live(effect: Path | None, icon: Path | None,
             raise DeployError("new N2ZBANK file has an unexpected effect ID or name")
     identify = _run(_python(ROOT / "tools/msplus.py", "--timeout", "5", "identify"),
                     capture=True)
-    if not (re.search(r"Family: 0x006e\b", identify, re.I)
-            and re.search(r"Model: 0x0023\b", identify, re.I)
-            and re.search(r"Version: 1\.40\b", identify)):
-        raise DeployError("connected pedal is not the reviewed MS-50G+ firmware 1.40")
+    profile = _profile_from_identify(identify)
+    print(f"Detected {profile.name} firmware {profile.firmware}.", flush=True)
     info = _run(_python(ROOT / "tools/msplus.py", "--timeout", "5", "patch-info"),
                 capture=True)
-    if not re.search(r"^Patches: 100\s*$", info, re.M):
-        raise DeployError("pedal does not report exactly 100 saved patches")
+    if not re.search(rf"^Patches: {profile.patch_count}\s*$", info, re.M):
+        raise DeployError(
+            f"{profile.name} does not report exactly {profile.patch_count} saved patches"
+        )
     require_stock_patch(current)
     with tempfile.TemporaryDirectory(prefix="patch-check-", dir=session) as temporary:
-        for location in range(1, 101):
+        for location in range(1, profile.patch_count + 1):
             path = Path(temporary) / f"{location:03d}.zptc"
             _run(_python(ROOT / "tools/msplus.py", "--timeout", "5",
                          "download-patch", str(location), str(path)))
