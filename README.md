@@ -77,6 +77,14 @@ user model weights are never distributed.
   LowPassFL; replacing LowPassFL with FD B-MAN caused PROCESS OVERFLOW on N2Z
   after reboot. New binaries and combinations need their own tests.
 
+## Acknowledgements
+
+Special thanks to [Thomas Hammer](https://github.com/thammer) for his work on
+[zoom-explorer](https://github.com/thammer/zoom-explorer) and
+[stomphacks](https://github.com/thammer/stomphacks). His research into the
+Zoom MS Plus pedal protocol and custom-effect tooling provided an important
+foundation for this project.
+
 ## License
 
 Project code is released under the [MIT License](LICENSE), copyright 2026
