@@ -89,7 +89,6 @@ final class AppViewModel: ObservableObject {
     private var backupDir: URL { appSupportDir.appendingPathComponent("Backup", isDirectory: true) }
     private var sessionsDir: URL { appSupportDir.appendingPathComponent("sessions", isDirectory: true) }
     private var adaptCacheDir: URL { appSupportDir.appendingPathComponent("adapt-cache", isDirectory: true) }
-    private var trainingDir: URL { appSupportDir.appendingPathComponent("training", isDirectory: true) }
 
     // MARK: - Selection / validation
 
@@ -344,23 +343,19 @@ final class AppViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Bundled training DI
+    // MARK: - Shared training DI
 
+    /// Reuses the WinForms app's own training DI instead of bundling a second
+    /// 16 MB copy into this app - same repo, same file, read directly.
     private func ensureBundledTrainingDi() throws -> URL {
-        try FileManager.default.createDirectory(at: trainingDir, withIntermediateDirectories: true)
-        let target = trainingDir.appendingPathComponent("TRAINING_DI.wav")
-        if let data = try? Data(contentsOf: target), Self.sha256Hex(data) == Self.bundledDiSha256 {
-            return target
+        let shared = root.appendingPathComponent("apps/nam2zoom-desktop/Assets/TRAINING_DI.wav")
+        guard let data = try? Data(contentsOf: shared) else {
+            throw SimpleError("Shared training DI is missing at \(shared.path)")
         }
-        guard let resource = Bundle.module.url(forResource: "TRAINING_DI", withExtension: "wav") else {
-            throw SimpleError("Bundled training DI is missing from the app")
-        }
-        let data = try Data(contentsOf: resource)
         guard Self.sha256Hex(data) == Self.bundledDiSha256 else {
-            throw SimpleError("Bundled training DI failed its SHA-256 check")
+            throw SimpleError("Shared training DI failed its SHA-256 check")
         }
-        try data.write(to: target, options: .atomic)
-        return target
+        return shared
     }
 
     private static func sha256Hex(_ data: Data) -> String {

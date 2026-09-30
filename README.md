@@ -27,6 +27,9 @@ and effect chains require their own checks before you trust them on hardware.
 
 ![n2z bank location in pedal](https://github.com/freelender/nam-to-zoom/blob/main/git-assets/n2z-location.gif?raw=true)
 
+A native macOS app lives in [apps/nam2zoom-mac](apps/nam2zoom-mac), mirroring
+this Windows app's backend and safety flow; see its own README for setup.
+
 ## Choose Your Path
 
 | Goal              | Start here                                                                                        | Tools needed                                |
