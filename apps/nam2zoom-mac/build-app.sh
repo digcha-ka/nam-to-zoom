@@ -9,16 +9,12 @@ cd "$here"
 swift build -c release
 
 bin="$(swift build -c release --show-bin-path)/nam2zoomMac"
-resource_bundle="$(swift build -c release --show-bin-path)/nam2zoom-mac_nam2zoomMac.bundle"
 
 app="$here/nam2zoom.app"
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 
 cp "$bin" "$app/Contents/MacOS/nam2zoom"
-if [ -d "$resource_bundle" ]; then
-  cp -R "$resource_bundle" "$app/Contents/Resources/"
-fi
 if [ -f "$here/AppIcon.icns" ]; then
   cp "$here/AppIcon.icns" "$app/Contents/Resources/AppIcon.icns"
 fi
