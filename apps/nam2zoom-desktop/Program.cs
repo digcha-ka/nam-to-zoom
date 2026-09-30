@@ -282,6 +282,8 @@ internal sealed class MainForm : Form
             : System.IO.Path.Combine(root, ".tooling", "stomphacks", ".venv", "Scripts", "python.exe");
         trainingPython = System.IO.Path.Combine(root, ".tooling", "nam-train-venv", "Scripts", "python.exe");
         Text = "nam2zoom";
+        var executableIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        if (executableIcon is not null) Icon = executableIcon;
         MinimumSize = new Size(1080, 720);
         Size = new Size(1380, 900);
         StartPosition = FormStartPosition.CenterScreen;
