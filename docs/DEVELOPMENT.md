@@ -273,6 +273,13 @@ UI supplies these only after its separate approval dialog.
 
 ## Build A Portable Release
 
+Set `<Version>` in the root `Directory.Build.props` before building a release.
+Use `major.minor.patch` for a stable version, or a prerelease suffix such as
+`1.0.0-preview.1`. The desktop window title, executable version metadata, and
+portable ZIP name all use this value. Use `nam2zoom-v<version>` as the GitHub
+release title and `v<version>` as its tag. Bump the version for a new release;
+the packaging script refuses to overwrite existing output for the same version.
+
 The user path is a separate self-contained Windows ZIP. Users never run
 `setup.ps1`. First complete the developer setup, then run from the clone root:
 

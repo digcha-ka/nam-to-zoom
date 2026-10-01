@@ -9,6 +9,19 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $tooling = Join-Path $root '.tooling'
+[xml]$versionConfig = Get-Content -LiteralPath (Join-Path $root 'Directory.Build.props') -Raw
+$releaseVersion = [string]$versionConfig.Project.PropertyGroup.Version
+if ($releaseVersion -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$') {
+    throw 'Directory.Build.props must specify a version such as 1.0.0 or 1.0.0-preview.1.'
+}
+$name = "nam2zoom-v$releaseVersion-windows-x64"
+if ($HardwareTestCandidate) { $name += '-hardware-test-' + (Get-Date -Format 'yyyyMMdd-HHmmss') }
+$dist = Join-Path $root 'dist'
+$payload = Join-Path $dist $name
+$archive = Join-Path $dist "$name.zip"
+if ((Test-Path -LiteralPath $payload) -or (Test-Path -LiteralPath $archive)) {
+    throw "Build output already exists: $name. Move the existing output or bump Version in Directory.Build.props."
+}
 function Run([string]$exe, [string[]]$arguments) {
     & $exe @arguments
     if ($LASTEXITCODE -ne 0) { throw "$exe failed with exit code $LASTEXITCODE" }
@@ -51,10 +64,7 @@ Run (Join-Path $tooling 'stomphacks/.venv/Scripts/python.exe') @('-m', 'unittest
     '-s', (Join-Path $root 'tests'), '-p', 'test_templates.py')
 
 $kind = if ($HardwareTestCandidate) { 'hardware-test' } else { 'preview' }
-$name = "nam2zoom-windows-x64-$kind-" + (Get-Date -Format 'yyyyMMdd-HHmmss')
-$dist = Join-Path $root 'dist'
 New-Item -ItemType Directory -Path $dist -Force | Out-Null
-$payload = Join-Path $dist $name
 New-Item -ItemType Directory -Path $payload | Out-Null
 Run 'dotnet' @('publish', (Join-Path $root 'apps/nam2zoom-desktop/nam2zoom-desktop.csproj'),
     '-c', 'Release', '-r', 'win-x64', '--self-contained', 'true',
@@ -130,5 +140,5 @@ New-Item -ItemType File -Path (Join-Path $runtime 'portable.marker') | Out-Null
 $env:PYTHONPATH = Join-Path $payload 'tools'
 Run (Join-Path $runtime 'python313/python.exe') @('-c', "import mido, rtmidi, construct; from nam2zoom.template import fill_template; print('Portable backend imports OK')")
 Run (Join-Path $runtime 'python312/python.exe') @('-m', 'venv', (Join-Path $work 'venv-smoke'))
-Compress-Archive -LiteralPath $payload -DestinationPath (Join-Path $dist "$name.zip")
-Write-Host "Portable $kind ZIP: $(Join-Path $dist "$name.zip")"
+Compress-Archive -LiteralPath $payload -DestinationPath $archive
+Write-Host "Portable $kind ZIP: $archive"
