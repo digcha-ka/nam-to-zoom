@@ -1,5 +1,16 @@
 # nam2zoom
 
+## Supported Devices
+
+| Zoom pedal | Status |
+| :--- | :--- |
+| **MS-50G+** | **Supported** - tested and working |
+| **MS-70CDR+** | **Supported** - tested and working |
+
+*More devices to come.*
+
+---
+
 nam2zoom converts one to five Neural Amp Modeler (`.nam`) files into a single
 Zoom MS Plus custom effect named **N2Z Bank**. The pedal effect exposes
 **Model, Bass, Mid, Treble, Vol, Input,** and **Mix** controls; only the
@@ -7,10 +18,9 @@ selected model runs at a time.
 
 The current build targets fixed 44.1 kHz, 3-channel, 14-layer student models
 and uses the pedal-tested two-sample kernel. The five-model, seven-control
-build was reported working on MS-50G+ firmware 1.40 on 2026-09-29. Installation
-also recognizes MS-70CDR+ firmware 1.20, based on its shared MS Plus protocol
-and upstream custom-effect testing, but N2Z Bank itself has not been tested on
-that pedal. This is still a preview release: new models, devices, saved patches,
+build was reported working on MS-50G+ firmware 1.40 on 2026-09-29. N2Z Bank
+has also been tested and confirmed working on MS-70CDR+. This is still a
+preview release: new models, devices, saved patches,
 and effect chains require their own checks before you trust them on hardware.
 
 ## Choose Your Path
@@ -65,8 +75,8 @@ user model weights are never distributed.
 ## Compatibility And Safety
 
 - Windows 10/11 x64.
-- Pedal installation supports Zoom MS-50G+ firmware 1.40 and experimentally
-  supports Zoom MS-70CDR+ firmware 1.20. Device identity is detected
+- Pedal installation supports Zoom MS-50G+ firmware 1.40 and
+  Zoom MS-70CDR+ firmware 1.20. Device identity is detected
   automatically; other models and firmware versions are refused.
 - The effect declares load 150; this is patch-admission metadata, not measured
   DSP utilization.
@@ -80,8 +90,6 @@ user model weights are never distributed.
 - The earlier six-control build passed one saved six-effect chain with
   LowPassFL; replacing LowPassFL with FD B-MAN caused PROCESS OVERFLOW on N2Z
   after reboot. New binaries and combinations need their own tests.
-- MS-70CDR+ support is based on the shared protocol and hardware-tested custom
-  ZD2 work in Stomphacks. N2Z Bank has not yet been run on an MS-70CDR+.
 
 ## Support
 
