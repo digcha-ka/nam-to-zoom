@@ -37,6 +37,7 @@ training = work / "training"
 training.mkdir()
 env = os.environ.copy()
 env.update(MPLBACKEND="Agg", OMP_NUM_THREADS="2", MKL_NUM_THREADS="2",
+           NAM2ZOOM_TEXT_PROGRESS="1", PYTHONUNBUFFERED="1",
            MPLCONFIGDIR=str(work / "mpl-cache"))
 subprocess.run([sys.executable, "-m", "nam.cli", str(data), str(model),
                 str(learning), str(training), "--no-show", "--no-plots"],

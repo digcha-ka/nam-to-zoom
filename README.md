@@ -83,6 +83,15 @@ user model weights are never distributed.
 - MS-70CDR+ support is based on the shared protocol and hardware-tested custom
   ZD2 work in Stomphacks. N2Z Bank has not yet been run on an MS-70CDR+.
 
+## Support
+
+If you would like to support my work, you can leave an optional tip. Donations
+will help fund additional pedals, audio gear, and other equipment needed to
+test and improve nam2zoom. They are appreciated, but never required to use
+the project.
+
+[![Support my work](https://img.shields.io/badge/Support_my_work-Donate-22a06b?style=for-the-badge)](https://streamelements.com/fret_lex/tip)
+
 ## Acknowledgements
 
 Special thanks to [Thomas Hammer](https://github.com/thammer) for his work on

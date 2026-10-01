@@ -59,3 +59,32 @@ index f11036c..f21a090 100644
              msg = "Output clipped."
              if self._y_path is not None:
                  msg += f"Source is {self._y_path}"
+diff --git a/nam/train/full.py b/nam/train/full.py
+--- a/nam/train/full.py
++++ b/nam/train/full.py
+@@ -6,3 +6,4 @@
+ import json as _json
++import os as _os
+ import pickle as _pickle
+ from pathlib import Path as _Path
+@@ -240,4 +241,6 @@
+     callbacks = _create_callbacks(learning_config, packed=is_packed)
++    if _os.environ.get("NAM2ZOOM_TEXT_PROGRESS") == "1":
++        callbacks.append(_pl.callbacks.TQDMProgressBar(refresh_rate=10))
+     packed_best_callback = next(
+         (c for c in callbacks if isinstance(c, _lightning_module.PackedBestCheckpoint)),
+         None,
+diff --git a/pyproject.toml b/pyproject.toml
+index ca0ea8e..30b2c90 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -23,9 +23,6 @@ dependencies = [
+     "sounddevice",
+     "tensorboard",
+     "torch",
+-    # `transformers` is not required, but if you have it, it needs to be recent
+-    # enough so I'm adding it.
+-    "transformers>=4",
+     "tqdm",
+     "wavio>=0.0.5",
+ ]

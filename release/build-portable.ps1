@@ -2,7 +2,8 @@ param(
     [string]$Python313,
     [string]$Python312,
     [string]$Templates,
-    [string]$TrainingWheel
+    [string]$TrainingWheel,
+    [switch]$HardwareTestCandidate
 )
 
 $ErrorActionPreference = 'Stop'
@@ -40,10 +41,17 @@ if (-not $Templates) {
 }
 if (-not (Test-Path -LiteralPath (Join-Path $Templates 'index.json'))) { throw 'Templates missing index.json' }
 $env:NAM2ZOOM_TEMPLATE_DIR = (Resolve-Path -LiteralPath $Templates).Path
+if ($HardwareTestCandidate) {
+    $env:NAM2ZOOM_HARDWARE_TEST_CANDIDATE = '1'
+    Write-Host 'Hardware-test candidate: DSP hardware baseline is unverified; structural checks still run.'
+} else {
+    Remove-Item Env:NAM2ZOOM_HARDWARE_TEST_CANDIDATE -ErrorAction SilentlyContinue
+}
 Run (Join-Path $tooling 'stomphacks/.venv/Scripts/python.exe') @('-m', 'unittest', 'discover',
     '-s', (Join-Path $root 'tests'), '-p', 'test_templates.py')
 
-$name = 'nam2zoom-windows-x64-preview-' + (Get-Date -Format 'yyyyMMdd-HHmmss')
+$kind = if ($HardwareTestCandidate) { 'hardware-test' } else { 'preview' }
+$name = "nam2zoom-windows-x64-$kind-" + (Get-Date -Format 'yyyyMMdd-HHmmss')
 $dist = Join-Path $root 'dist'
 New-Item -ItemType Directory -Path $dist -Force | Out-Null
 $payload = Join-Path $dist $name
@@ -123,4 +131,4 @@ $env:PYTHONPATH = Join-Path $payload 'tools'
 Run (Join-Path $runtime 'python313/python.exe') @('-c', "import mido, rtmidi, construct; from nam2zoom.template import fill_template; print('Portable backend imports OK')")
 Run (Join-Path $runtime 'python312/python.exe') @('-m', 'venv', (Join-Path $work 'venv-smoke'))
 Compress-Archive -LiteralPath $payload -DestinationPath (Join-Path $dist "$name.zip")
-Write-Host "Portable preview ZIP: $(Join-Path $dist "$name.zip")"
+Write-Host "Portable $kind ZIP: $(Join-Path $dist "$name.zip")"

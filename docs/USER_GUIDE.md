@@ -38,7 +38,7 @@ Keep the **Backup** checkbox checked for a full device backup in `Backup` beside
 | Input | Level entering NAM | 50 (unity) |
 | Mix | Dry/wet blend after tone and Vol | 100 (fully wet) |
 
-The dry path is not changed by Input, tone, or Vol. Mix 0 is dry; Mix 100 is fully modeled. Only one model runs at a time. Model weights remain inside the effect file; changing the bank replaces the entire effect, not separate files on the pedal.
+The amp receives the average of the left and right channels and sends its mono output to both outputs. Identical signals on both channels keep their level; a signal on only one channel enters the amp 6 dB lower. The dry path stays stereo and is not changed by Input, tone, or Vol. Mix 0 is dry; Mix 100 is fully modeled. Only one model runs at a time. Model weights remain inside the effect file; changing the bank replaces the entire effect, not separate files on the pedal.
 
 ## Known Limits
 

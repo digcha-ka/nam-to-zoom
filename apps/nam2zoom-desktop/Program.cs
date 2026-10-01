@@ -1339,10 +1339,11 @@ internal sealed class MainForm : Form
             string? line;
             while ((line = await reader.ReadLineAsync()) is not null) {
                 collected.AppendLine(line);
+                var capturedLine = line;
                 if (stream && !IsDisposed && IsHandleCreated)
                     BeginInvoke(() => {
-                        log.AppendText(line + "\r\n");
-                        UpdateActivity(line);
+                        log.AppendText(capturedLine + "\r\n");
+                        UpdateActivity(capturedLine);
                     });
             }
             return collected.ToString();

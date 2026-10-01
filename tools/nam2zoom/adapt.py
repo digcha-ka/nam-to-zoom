@@ -205,6 +205,7 @@ def prepare_configs(dry: Path, wet: Path, work: Path, epochs: int) -> tuple[Path
     learning = json.loads(LEARNING_TEMPLATE.read_text(encoding="utf-8"))
     learning["trainer"]["accelerator"] = "auto"
     learning["trainer"]["max_epochs"] = epochs
+    learning["trainer"]["enable_progress_bar"] = True
     data = {
         "train": {"start_seconds": None, "stop_seconds": -float(VALIDATION_SECONDS), "ny": 8192},
         "validation": {"start_seconds": -float(VALIDATION_SECONDS),
@@ -302,12 +303,20 @@ def adapt(source: Path, di: Path, cache: Path, *, epochs: int = 100,
     train_root = work / "training"
     train_root.mkdir()
     env = os.environ.copy()
+    # Small convolutions can spend more time coordinating CPU threads than computing.
+    env.setdefault("OMP_NUM_THREADS", "2")
+    env.setdefault("MKL_NUM_THREADS", "2")
+    env["PYTHONUNBUFFERED"] = "1"
+    env["NAM2ZOOM_TEXT_PROGRESS"] = "1"
     env["MPLBACKEND"] = "Agg"
     env["MPLCONFIGDIR"] = str(ROOT / ".tooling" / "nam-mpl-cache")
     if allow_float_overs:
         env["NAM2ZOOM_ALLOW_FLOAT_OVERS"] = "1"
+    print("Starting training; CPU thread limits: "
+          f"OMP={env['OMP_NUM_THREADS']}, MKL={env['MKL_NUM_THREADS']}. "
+          "Initial validation runs before the first training epoch.", flush=True)
     _run([sys.executable, "-m", "nam.cli", str(data), str(model), str(learning),
-          str(train_root)], env=env)
+          str(train_root), "--no-show", "--no-plots"], env=env)
     exports = list(train_root.glob("*/model.nam"))
     if len(exports) != 1:
         raise RuntimeError(f"expected one trained NAM export, found {len(exports)}")

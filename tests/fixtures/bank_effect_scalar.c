@@ -12,6 +12,11 @@
 #define HISTORY_BYTES (HISTORY_FLOATS * sizeof(float))
 #define CLEAR_PER_BLOCK 512u
 #define INITIALIZED 0x41324231u
+#define RECOVERING 0x52454331u
+#define CTX_GET_PARAM 40u
+#define UI_PARAM_MODEL 2 /* host entries 0 and 1 precede the user parameters */
+
+typedef int (*GetParamFn)(void *, int);
 
 typedef struct {
     CompactState model;
@@ -63,7 +68,7 @@ static float tone_process(EffectState *state, float wet, float bass,
 static void effect_process(void **instance, void **ctx)
 {
     EffectState *state = (EffectState *)instance[2];
-    const float *coeff = (const float *)instance[1];
+    float *coeff = (float *)instance[1];
     uintptr_t descriptor_address = (uintptr_t)instance[3];
     const uint32_t *descriptor;
     uintptr_t base, end;
@@ -113,6 +118,15 @@ static void effect_process(void **instance, void **ctx)
         ++selected;
         threshold += step;
     }
+    if ((state->initialized == INITIALIZED || state->initialized == RECOVERING) &&
+        state->active_model < BANK_MODEL_COUNT && selected != state->active_model &&
+        instance[0] != 0 && ctx[CTX_GET_PARAM] != 0) {
+        int raw_model = ((GetParamFn)ctx[CTX_GET_PARAM])(instance[0], UI_PARAM_MODEL);
+        if (raw_model >= 0 && (uint32_t)raw_model <= BANK_SELECTOR_MAX) {
+            selected = (uint32_t)raw_model;
+            coeff[SH_PARAM_MODEL] = (float)selected * step;
+        }
+    }
     if (selected >= BANK_MODEL_COUNT) {
         state->initialized = 0;
         return; /* the one-model bank's EMPTY selector is dry pass-through */
@@ -158,11 +172,12 @@ static void effect_process(void **instance, void **ctx)
         float wet, out_l, out_r;
         if (!(dry_l > -8.0f && dry_l < 8.0f)) dry_l = 0.0f;
         if (!(dry_r > -8.0f && dry_r < 8.0f)) dry_r = 0.0f;
-        wet = compact_process(weights, history, &state->model, dry_l * (2.0f * input));
+        wet = compact_process(weights, history, &state->model, (dry_l + dry_r) * input);
         if (!(wet > -8.0f && wet < 8.0f)) {
-            wet = 0.0f;
-            state->low = 0.0f;
-            state->upper = 0.0f;
+            /* Poisoned recurrent history cannot recover without a full clear. */
+            state->initialized = RECOVERING;
+            silence(bus);
+            return;
         }
         wet = tone_process(state, wet, bass, mid, treble) * (2.0f * volume);
         out_l = blend_output(dry_l, wet, wet_gain);

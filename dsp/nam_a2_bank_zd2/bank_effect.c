@@ -15,6 +15,11 @@ typedef char even_warmup[(COMPACT_RECEPTIVE_FIELD % 2u == 0u) ? 1 : -1];
 #define HISTORY_BYTES (HISTORY_FLOATS * sizeof(float))
 #define CLEAR_PER_BLOCK 512u
 #define INITIALIZED 0x50324231u
+#define RECOVERING 0x52454331u
+#define CTX_GET_PARAM 40u
+#define UI_PARAM_MODEL 2 /* host entries 0 and 1 precede the user parameters */
+
+typedef int (*GetParamFn)(void *, int);
 
 typedef struct {
     CompactPairState model;
@@ -66,7 +71,7 @@ static float tone_process(EffectState *state, float wet, float bass,
 static void effect_process(void **instance, void **ctx)
 {
     EffectState *state = (EffectState *)instance[2];
-    const float *coeff = (const float *)instance[1];
+    float *coeff = (float *)instance[1];
     uintptr_t descriptor_address = (uintptr_t)instance[3];
     const uint32_t *descriptor;
     uintptr_t base, end;
@@ -115,6 +120,15 @@ static void effect_process(void **instance, void **ctx)
     while (selected < BANK_SELECTOR_MAX && selector >= threshold) {
         ++selected;
         threshold += step;
+    }
+    if ((state->initialized == INITIALIZED || state->initialized == RECOVERING) &&
+        state->active_model < BANK_MODEL_COUNT && selected != state->active_model &&
+        instance[0] != 0 && ctx[CTX_GET_PARAM] != 0) {
+        int raw_model = ((GetParamFn)ctx[CTX_GET_PARAM])(instance[0], UI_PARAM_MODEL);
+        if (raw_model >= 0 && (uint32_t)raw_model <= BANK_SELECTOR_MAX) {
+            selected = (uint32_t)raw_model;
+            coeff[SH_PARAM_MODEL] = (float)selected * step;
+        }
     }
     if (selected >= BANK_MODEL_COUNT) {
         state->initialized = 0;
@@ -168,15 +182,18 @@ static void effect_process(void **instance, void **ctx)
             if (!(dry_r[frame] > -8.0f && dry_r[frame] < 8.0f)) dry_r[frame] = 0.0f;
         }
         compact_process_pair(weights, history, &state->model,
-                             dry_l[0] * (2.0f * input), dry_l[1] * (2.0f * input),
+                             (dry_l[0] + dry_r[0]) * input,
+                             (dry_l[1] + dry_r[1]) * input,
                              &wet[0], &wet[1]);
+        if (!(wet[0] > -8.0f && wet[0] < 8.0f) ||
+            !(wet[1] > -8.0f && wet[1] < 8.0f)) {
+            /* Poisoned recurrent history cannot recover without a full clear. */
+            state->initialized = RECOVERING;
+            silence(bus);
+            return;
+        }
         for (frame = 0; frame < 2u; ++frame) {
             float out_l, out_r, modeled = wet[frame];
-            if (!(modeled > -8.0f && modeled < 8.0f)) {
-                modeled = 0.0f;
-                state->low = 0.0f;
-                state->upper = 0.0f;
-            }
             modeled = tone_process(state, modeled, bass, mid, treble) * (2.0f * volume);
             out_l = blend_output(dry_l[frame], modeled, wet_gain);
             out_r = blend_output(dry_r[frame], modeled, wet_gain);

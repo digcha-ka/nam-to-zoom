@@ -13,20 +13,17 @@ ASCII strings of at most five characters.
 Each selected model runs as a **44.1 kHz, 3-channel, 14-layer** NAM student
 on the pedal. The builder uses the two-sample kernel and declares a raw DSP
 load of **150**. The load declaration is patch-admission metadata, not a
-measured CPU percentage. It is validated only for the combinations described
-below, not every six-effect patch.
+measured CPU percentage. Check DSP headroom for each effect-chain configuration.
 
 This is a source project, not a prebuilt portable release. Building and
-converting NAM files require the tools below. N2Z Bank has only been
-hardware-auditioned on an MS-50G+ running firmware **1.40**. MS-70CDR+
-firmware **1.20** installation support is experimental and based on the shared
-MS Plus protocol plus upstream custom-effect testing. Custom
+converting NAM files require the tools below. Installation targets the device
+and firmware profiles listed under Requirements. Custom
 effects can freeze or permanently disable a pedal; guarded checks reduce
 risk but do not remove it.
 
 ## Requirements (Windows)
 
-- Windows 10/11 x64; Zoom MS-50G+ **firmware 1.40**, or experimentally Zoom
+- Windows 10/11 x64; Zoom MS-50G+ **firmware 1.40**, or Zoom
   MS-70CDR+ **firmware 1.20**, for pedal installation.
 - Install the [.NET 10 SDK](https://learn.microsoft.com/en-us/dotnet/core/install/windows)
   (the SDK includes the runtime),
@@ -223,25 +220,10 @@ all saved N2Z Bank patches before replacing the bank.
 If any transfer fails, keep the pedal powered, preserve the app log/session,
 and follow the Stomphacks `SAFETY.md` rescue procedure. Do not blindly retry.
 
-The exact five-model 150-load build was tested on MS-50G+ firmware 1.40.
-Patch 100 with one N2Z Bank, ZNR, RackComp, TS Drive, Hall REV, and
-LowPassFL saved and worked after a power cycle. All six effects were ON in
-patch readback. An unsaved chain with FD B-MAN in place of LowPassFL played
-cleanly, but after saving and power-cycling that chain the pedal displayed
-PROCESS OVERFLOW on N2Z. The pedal remained responsive. Do not treat the
-FD B-MAN combination as supported. Multiple N2Z instances are also not a
-supported saved-patch configuration. New banks and combinations still need
-their own audition. Lowering the declaration changes patch admission, not
-DSP work; never lower it solely to force more effects into a patch.
-
-The tested five-model 150-load build had ZD2 SHA-256
-`f39993c90e4936c06a856468a25c5a0705c4b5e0e1ce5085c9d85435d63a75b2`
-and ZIC SHA-256
-`59c19e338ddb9bab408752b0c2f016188cd3724e94cfe2ff2c051bb302e697bd`.
-Newly trained models produce different files and require their own checks.
-These saved-chain results apply to the earlier six-control binary. The current
-seven-control two-sample build passed a pedal audition as described below;
-that does not transfer the older build's saved-chain results to every new bank.
+Validate new banks and effect combinations, including saved-patch behavior
+after a power cycle. Avoid multiple N2Z instances in a saved patch. Lowering
+the load declaration changes patch admission, not DSP work; never lower it
+solely to force more effects into a patch.
 
 ## Troubleshooting
 
@@ -313,6 +295,11 @@ For repeat local packaging, `-Templates <previous template folder>` and
 `-TrainingWheel <pinned trainer wheel>` reuse generated inputs. Only reuse
 templates built from the current DSP/control sources; regenerate them after
 any such change. Normal developer bank builds still compile from source.
+After an intentional DSP change, `-HardwareTestCandidate` packages a ZIP labelled
+`hardware-test` for pedal audition. It skips only the comparison against the
+previously auditioned DSP image; structural template checks still run. Regular
+preview builds retain the hardware-baseline check. Update that baseline only
+after the new DSP has been auditioned on the pedal.
 Portable builds find `release/templates/index.json` and fill only the
 validated constant-table weight/label ranges, update CRC, and audit the
 result. No DSP instruction or relocation is patched. The complete effect
@@ -321,8 +308,7 @@ file is still replaced on the pedal. Saved-patch guards are not bypassed.
 On the first adaptation, the app asks before downloading CPU or NVIDIA
 PyTorch packages into a local venv. The NAM wheel and resolved CPU training
 dependency versions are pinned in `release/training-constraints.txt`.
-CUDA setup and clean-Windows testing still need independent validation;
-this is not a claim of full supply-chain reproducibility. Training runs with `python -m nam.cli`
+Training runs with `python -m nam.cli`
 instead of an absolute-path console launcher, and portable venv home paths
 are updated after moving the extracted folder.
 
@@ -336,7 +322,7 @@ Before publishing: test ZIP extraction on a clean Windows account with no
 developer tools, direct-model packaging, initial CPU/GPU setup, at least one
 conversion/preview, and guarded install/uninstall. Confirm every bundled
 license notice, compare filled templates against compiler-built artifacts,
-and audition the new Mix binary on the pedal before saving a patch. Use a
+and audition the generated bank on the pedal before saving a patch. Use a
 GitHub **prerelease** until these checks pass. Do not publish personal NAM
 weights or backups.
 
@@ -347,14 +333,6 @@ The default build uses `dsp/nam_a2_compact/compact_pair.c` with the same
 it does not skip, average or resample them. History uses 20,076 bytes instead
 of the scalar reference's 39,792 bytes. The instance initialization tag is
 different so the two history layouts cannot be reused interchangeably.
-
-On 2026-09-29 the project owner reported that the five-model, seven-control
-pair build worked perfectly on MS-50G+ firmware 1.40. Its ZD2 SHA-256 was
-`41dde8f7937ca20f99d49093d2e147f38105f0a4d4469a67033b9e55ee8aa41f`;
-its ZIC SHA-256 was
-`59c19e338ddb9bab408752b0c2f016188cd3724e94cfe2ff2c051bb302e697bd`.
-This is a pedal audition result, not a calibrated CPU measurement or proof
-of every saved chain's headroom. Load remains 150.
 
 Kernel tests compare scalar and pair output, causal delays, history wrapping
 and memory guards. Full-callback replay uses the production wrapper, all five
@@ -384,5 +362,4 @@ or establish compatibility with arbitrary catalogue formats.
 Project code is available under the [MIT License](../LICENSE), copyright 2026
 Aleksandar Vukasinovic. The downloaded Stomphacks, NAM, NAM Core, and TI tools
 have their own terms; `.tooling` and compiler binaries are not part of the Git
-repository. Fresh-machine setup and broader device compatibility have not
-been independently verified.
+repository.

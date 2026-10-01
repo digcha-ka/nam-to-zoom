@@ -49,15 +49,18 @@ def derive_callback(source):
             if (!(dry_r[frame] > -8.0f && dry_r[frame] < 8.0f)) dry_r[frame] = 0.0f;
         }
         compact_process_pair(weights, history, &state->model,
-                             dry_l[0] * (2.0f * input), dry_l[1] * (2.0f * input),
+                             (dry_l[0] + dry_r[0]) * input,
+                             (dry_l[1] + dry_r[1]) * input,
                              &wet[0], &wet[1]);
+        if (!(wet[0] > -8.0f && wet[0] < 8.0f) ||
+            !(wet[1] > -8.0f && wet[1] < 8.0f)) {
+            /* Poisoned recurrent history cannot recover without a full clear. */
+            state->initialized = RECOVERING;
+            silence(bus);
+            return;
+        }
         for (frame = 0; frame < 2u; ++frame) {
             float out_l, out_r, modeled = wet[frame];
-            if (!(modeled > -8.0f && modeled < 8.0f)) {
-                modeled = 0.0f;
-                state->low = 0.0f;
-                state->upper = 0.0f;
-            }
             modeled = tone_process(state, modeled, bass, mid, treble) * (2.0f * volume);
             out_l = blend_output(dry_l[frame], modeled, wet_gain);
             out_r = blend_output(dry_r[frame], modeled, wet_gain);
@@ -75,16 +78,18 @@ class PairBankTests(unittest.TestCase):
         clang = find_clang()
         if not clang:
             self.skipTest("host Clang unavailable")
-        bank = Path(os.environ.get("NAM2ZOOM_PAIR_BANK", ROOT / ".tooling/pair-pedal-candidate-20260929"))
+        bank = Path(os.environ.get("NAM2ZOOM_PAIR_BANK", ROOT / ".tooling/pair-bank-test-input"))
         source = (ROOT / "tests/fixtures/bank_effect_scalar.c").read_text(encoding="utf-8")
         production = (ROOT / "dsp/nam_a2_bank_zd2/bank_effect.c").read_text(encoding="utf-8")
         self.assertEqual(production, derive_callback(source))
-        header = "#define SH_STATE_BYTES 128\n#define SH_FRAMES 16\n#define SH_CH_B_OFFSET 16\n"
+        header = "#ifndef SH_PARAMS_H\n#define SH_PARAMS_H\n"
+        header += "#define SH_STATE_BYTES 128\n#define SH_FRAMES 16\n#define SH_CH_B_OFFSET 16\n"
         header += "#define SH_CTX_EFF 1\n#define SH_STATE_GUARD_WORD 32\n#define SH_STATE_GUARD 0x57464731u\n"
         header += "#define SH_COEFF_BYPASS 0\n#define SH_AUDIO_FN unused_audio\n"
         header += "".join(f"#define SH_PARAM_{name} {index}\n" for name, index in
                           zip(("MODEL", "BASS", "MID", "TREBLE", "VOL", "INPUT", "MIX"),
                               (3, 5, 6, 7, 8, 9, 10)))
+        header += "#endif\n"
         if (bank / "build/sh_params.h").is_file():
             header = (bank / "build/sh_params.h").read_text(encoding="utf-8")
         if (bank / "weights.f32").is_file():
@@ -129,26 +134,42 @@ class PairBankTests(unittest.TestCase):
 const uint32_t N2ZBankWeights[3295] = {{{words}}};
 static uint32_t storage[SH_STATE_BYTES / 4 + 2];
 static float arena[HISTORY_FLOATS + 2];
+static int ui_model_override = -1;
+static int get_param(void *object, int index) {{
+    if (index == 0) return 1;
+    if (index != 2) return -1;
+    return ui_model_override >= 0 ? ui_model_override : *(int *)object;
+}}
 void {variant}_reset(void) {{
     unsigned i;
     memset(storage, 0, sizeof(storage));
     storage[SH_STATE_GUARD_WORD] = SH_STATE_GUARD;
     storage[SH_STATE_GUARD_WORD + 1] = 0x12345678u;
     for (i = 0; i < HISTORY_FLOATS + 2; ++i) arena[i] = 12345.0f;
+    ui_model_override = -1;
 }}
-void {variant}_run(float *bus, const float *coeff, int invalid_descriptor) {{
+void {variant}_run(float *bus, float *coeff, int invalid_descriptor) {{
     uint32_t descriptor[3] = {{(uint32_t)(uintptr_t)(arena + 1),
         (uint32_t)(uintptr_t)(arena + 1 + HISTORY_FLOATS), HISTORY_BYTES}};
-    void *instance[4] = {{0, (void *)coeff, storage, descriptor}};
-    void *ctx[2] = {{0, bus}};
+    int ui_model = (int)(coeff[SH_PARAM_MODEL] * BANK_SELECTOR_MAX + 0.5f);
+    void *instance[4] = {{&ui_model, coeff, storage, descriptor}};
+    void *ctx[41] = {{0}};
+    ctx[SH_CTX_EFF] = bus;
+    ctx[CTX_GET_PARAM] = (void *)get_param;
     if (invalid_descriptor) descriptor[2] = 0;
     effect_process(instance, ctx);
+}}
+void {variant}_set_ui_model(int model) {{ ui_model_override = model; }}
+void {variant}_poison_history(void) {{
+    unsigned i;
+    for (i = 1; i <= HISTORY_FLOATS; ++i) arena[i] = 0.0f / 0.0f;
 }}
 int {variant}_ready(void) {{
     EffectState *s = (EffectState *)storage;
     return s->initialized == INITIALIZED && s->clear_count == HISTORY_FLOATS &&
            s->warm_count == COMPACT_RECEPTIVE_FIELD;
 }}
+unsigned {variant}_active_model(void) {{ return ((EffectState *)storage)->active_model; }}
 int {variant}_guards(void) {{
     return storage[SH_STATE_GUARD_WORD] == SH_STATE_GUARD &&
            storage[SH_STATE_GUARD_WORD + 1] == 0x12345678u &&
@@ -161,9 +182,10 @@ int {variant}_guards(void) {{
                                check=True, capture_output=True)
                 objects.append(str(obj))
             exe = folder / "probe.exe"
-            subprocess.run([clang, "-m32", "-O3", "-ffp-contract=off", *objects,
-                            str(ROOT / "tests/pair_bank_probe.c"), "-o", str(exe)],
-                           check=True, capture_output=True)
+            link = subprocess.run([clang, "-m32", "-O3", "-ffp-contract=off", *objects,
+                                   str(ROOT / "tests/pair_bank_probe.c"), "-o", str(exe)],
+                                  capture_output=True, text=True)
+            self.assertEqual(link.returncode, 0, link.stdout + link.stderr)
             result = subprocess.run([str(exe)], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("bit-exact", result.stdout)
