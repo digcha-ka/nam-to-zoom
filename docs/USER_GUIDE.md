@@ -28,6 +28,8 @@ Before replacing/removing N2Z Bank, disable autosave, select a stock patch, and 
 
 **Build + Install** asks for separate approval of the exact effect/icon hashes. If the effect already exists, the app replaces it instead of adding a duplicate. The app validates the effect, identity, autosave, patches, effect list, and readback. **Uninstall effect** removes the existing N2Z Bank using the same guarded checks; it does not reset the pedal or delete stock effects.
 
+Banks installed by the previous portable version (`0x07000F87`) are recognized for replacement and uninstall. New banks use `0x04001787` in PREAMP. You do not need to uninstall with the old app first. Before upgrading, remove N2Z Bank from saved patches and select a stock patch as described above; saved patches referencing the old ID are not automatically migrated.
+
 Keep the **Backup** checkbox checked for a full device backup in `Backup` beside the EXE. With it unchecked, the app retains a smaller operation session but does not create a full-device backup. Keep USB and power connected until the operation completes. On a transfer failure, preserve the log/session and keep the device connected; consult the included `.tooling/stomphacks/SAFETY.md` instead of repeatedly reconnecting, writing, or power-cycling.
 
 ## Pedal Controls

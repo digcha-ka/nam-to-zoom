@@ -18,7 +18,9 @@ ROOT = Path(__file__).resolve().parents[2]
 STOMP = ROOT / ".tooling/stomphacks"
 BANK_NAME = "N2ZBANK.ZD2"
 BANK_ICON = "N2ZBANK.ZIC"
-BANK_ID = 0x07000F87
+BANK_ID = 0x04001787
+LEGACY_BANK_IDS = frozenset({0x07000F87})
+INSTALLED_BANK_IDS = LEGACY_BANK_IDS | {BANK_ID}
 
 
 class DeployError(RuntimeError):
@@ -162,7 +164,7 @@ def plan_backup(effect: Path | None, icon: Path | None,
         raise DeployError("existing N2Z Bank binary/icon pair is incomplete")
     if existing:
         old = parse_zd2_bytes((backup / "files" / BANK_NAME).read_bytes())
-        if old.effect_id != BANK_ID or old.name != "N2Z Bank":
+        if old.effect_id not in INSTALLED_BANK_IDS or old.name != "N2Z Bank":
             raise DeployError("existing N2ZBANK filename has an unexpected identity")
     flst = _flst()
     old_list = flst_path.read_bytes()
@@ -246,7 +248,7 @@ def plan_live(effect: Path | None, icon: Path | None,
         _download(BANK_NAME, old_effect)
         _download(BANK_ICON, live / BANK_ICON)
         old = parse_zd2_bytes(old_effect.read_bytes())
-        if old.effect_id != BANK_ID or old.name != "N2Z Bank":
+        if old.effect_id not in INSTALLED_BANK_IDS or old.name != "N2Z Bank":
             raise DeployError("existing N2ZBANK filename has an unexpected identity")
     return existing, live
 

@@ -19,7 +19,7 @@ import zoomzt2
 def catalogue():
     header = dict(name="BLANK.ZD2")
     groups = []
-    for group in (1, 2, 7):
+    for group in (1, 2, 4, 7):
         effects = [dict(effect=f"FX{group}{index}.ZD2", version="1.10",
                         installed=index % 2, id=(group << 24) | (index + 1),
                         catalog_flags=flag)
@@ -33,7 +33,7 @@ class CatalogueFlagsTests(unittest.TestCase):
         data = catalogue()
         valid, problems, entries = flst_check.validate_flst(data)
         self.assertTrue(valid, problems)
-        self.assertEqual(len(entries), 12)
+        self.assertEqual(len(entries), 16)
         rebuilt = flst_check.pad_to_native(
             zoomzt2.ZT2.build(zoomzt2.ZT2.parse(data)), len(data))
         self.assertEqual(rebuilt, data)
@@ -42,7 +42,7 @@ class CatalogueFlagsTests(unittest.TestCase):
         data = catalogue()
         editor = zoomzt2.zoomzt2()
         added = flst_check.pad_to_native(
-            editor.add_effect(data, "N2ZBANK.ZD2", "1.00", 0x07000F87), len(data))
+            editor.add_effect(data, "N2ZBANK.ZD2", "1.00", 0x04001787), len(data))
         self.assertEqual(flst_check.expect_single_add(data, added, "N2ZBANK.ZD2"),
                          (True, []))
         parsed = zoomzt2.ZT2.parse(added)
@@ -53,6 +53,24 @@ class CatalogueFlagsTests(unittest.TestCase):
         self.assertEqual(flst_check.expect_single_remove(added, removed, "N2ZBANK.ZD2"),
                          (True, []))
         self.assertEqual(removed, data)
+
+    def test_previous_bank_moves_from_group_seven_to_preamp(self):
+        data = catalogue()
+        editor = zoomzt2.zoomzt2()
+        previous = flst_check.pad_to_native(
+            editor.add_effect(data, "N2ZBANK.ZD2", "0.01", 0x07000F87), len(data))
+        removed = flst_check.pad_to_native(
+            editor.remove_effect(previous, "N2ZBANK.ZD2"), len(data))
+        self.assertEqual(flst_check.expect_single_remove(previous, removed, "N2ZBANK.ZD2"),
+                         (True, []))
+        self.assertEqual(removed, data)
+        upgraded = flst_check.pad_to_native(
+            editor.add_effect(removed, "N2ZBANK.ZD2", "0.01", 0x04001787), len(data))
+        self.assertEqual(flst_check.expect_single_add(removed, upgraded, "N2ZBANK.ZD2"),
+                         (True, []))
+        banks = [(g.group, e.id) for g in zoomzt2.ZT2.parse(upgraded)[1]
+                 for e in g.effects if e.effect == "N2ZBANK.ZD2"]
+        self.assertEqual(banks, [(4, 0x04001787)])
 
     def test_invalid_structures_still_refused(self):
         data = catalogue()

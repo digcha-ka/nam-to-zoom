@@ -14,7 +14,17 @@ diff --git a/tools/zd2_make_effect.py b/tools/zd2_make_effect.py
 index d5d1d06..cc0f008 100644
 --- a/tools/zd2_make_effect.py
 +++ b/tools/zd2_make_effect.py
-@@ -1684,7 +1684,7 @@ def finalize_container(m: dict, builddir: Path, report: list) -> Path:
+@@ -1608,6 +1608,9 @@
+         assert zicp.exists(), "ICON swap requires the ZIC to be built first"
+         zic = convert_zic.ZIC.parse(zicp.read_bytes())
+         ilen = config["ICON"]["length"]
++        if m.get("icon_frames"):
++            ilen = zic.icons[0].bytes
++            config["ICON"]["length"] = ilen
+         frame = next((bytes(d.data) for ic, d in zip(zic.icons, zic.datas)
+                       if ic.bytes == ilen), None)
+         config["ICON"]["data"] = frame if frame is not None else bytes(ilen)
+@@ -1684,10 +1684,15 @@ def finalize_container(m: dict, builddir: Path, report: list) -> Path:
  def make_icon(m: dict, builddir: Path, report: list) -> Path:
      """Fresh 1-bit icon frames (all pixels drawn here) in a ZIC built from
      scratch (the standard two-frame DIY geometry, tools/zd2_from_scratch.py)."""
@@ -23,7 +33,16 @@ index d5d1d06..cc0f008 100644
      import zd2_from_scratch
  
      zic = builddir / f"{m['filename']}.ZIC"
-@@ -1696,23 +1696,35 @@ def make_icon(m: dict, builddir: Path, report: list) -> Path:
+-    zic.write_bytes(zd2_from_scratch.blank_zic())
++    geometry = m.get("icon_frames", zd2_from_scratch.ICON_FRAMES)
++    if list(map(tuple, geometry)) not in (
++            zd2_from_scratch.ICON_FRAMES, [(97, 97), (128, 128)]):
++        die("icon_frames must use the standard DIY or PREAMP geometry")
++    zic.write_bytes(zd2_from_scratch.build_zic([
++        (w, h, bytes(w * ((h + 7) // 8))) for w, h in geometry]))
+     for old in builddir.glob("icon_*.png"):
+         old.unlink()
+@@ -1696,23 +1696,55 @@ def make_icon(m: dict, builddir: Path, report: list) -> Path:
  
      frames = sorted(builddir.glob("icon_*.png"))
      assert frames, "convert_zic produced no frames"
@@ -33,9 +52,14 @@ index d5d1d06..cc0f008 100644
 +        if not source.is_file():
 +            die(f"custom icon not found: {source}")
 +        custom = Image.open(source)
-+        if custom.size != (72, 97):
-+            die(f"custom icon must be 72x97 pixels: {source}")
++        if custom.size not in ((72, 97), (97, 97)):
++            die(f"custom icon must be 72x97 or 97x97 pixels: {source}")
 +        custom = custom.convert("1")
++        if m.get("icon_trim"):
++            bounds = ImageOps.invert(custom.convert("L")).getbbox()
++            if bounds is None:
++                die("custom icon contains no artwork")
++            custom = custom.crop(bounds)
      for p in frames:
          w, h = Image.open(p).size
 -        img = Image.new("L", (w, h), 255)
@@ -57,6 +81,21 @@ index d5d1d06..cc0f008 100644
 +            scaled = ImageOps.contain(custom, (w, h), Image.Resampling.NEAREST)
 +            img = Image.new("1", (w, h), 255)
 +            img.paste(scaled, ((w - scaled.width) // 2, (h - scaled.height) // 2))
++            if m.get("icon_stock_knobs"):
++                layouts = {(97, 97): ([18, 38, 58, 78], 25, 8),
++                           (128, 128): ([24, 51, 77, 104], 33, 10)}
++                if (w, h) not in layouts:
++                    die("icon_stock_knobs requires PREAMP frames")
++                centers, cy, radius = layouts[(w, h)]
++                d = ImageDraw.Draw(img)
++                # Replace scaled decorative controls with stock-position knobs.
++                d.rectangle((centers[0] - radius - 2, cy - radius - 2,
++                             centers[-1] + radius + 2, cy + radius + 5), fill=255)
++                for cx in centers:
++                    top = cy - radius - (1 if w == 128 else 0)
++                    d.ellipse((cx - radius, top, cx + radius, cy + radius),
++                              outline=0, width=2)
++                    d.line((cx, top + 3, cx, cy - 1), fill=0, width=2)
 +            img.save(p)
 +        else:
 +            img = Image.new("L", (w, h), 255)
@@ -86,3 +125,15 @@ index d5d1d06..cc0f008 100644
      return zic
  
  
+diff --git a/tools/zd2_from_scratch.py b/tools/zd2_from_scratch.py
+--- a/tools/zd2_from_scratch.py
++++ b/tools/zd2_from_scratch.py
+@@ -62,7 +62,7 @@ OPAQUE_TRAILER_16 = bytes(16)
+ OPAQUE_TRAILER_16 = bytes(16)
+ 
+ # Effect groups: the id's top byte, and the group name string the container
+ # carries. Same table as zoom-zt2's grammar and docs/effect-ids.md.
+-GROUP_NAMES = {1: "DYNAMICS", 2: "FILTER", 3: "DRIVE", 4: "AMP",
++GROUP_NAMES = {1: "DYNAMICS", 2: "FILTER", 3: "DRIVE", 4: "PREAMP",
+                5: "CABINET", 6: "MODULATION", 7: "SFX", 8: "DELAY",
+                9: "REVERB", 11: "PEDAL"}

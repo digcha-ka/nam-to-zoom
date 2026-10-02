@@ -18,7 +18,7 @@ SOURCE = ROOT / "dsp" / "nam_a2_bank_zd2"
 KERNEL = ROOT / "dsp" / "nam_a2_compact"
 STOMPHACKS = ROOT / ".tooling" / "stomphacks"
 TOOLCHAIN = ROOT / ".tooling" / "cgt-8.3.1" / "ti-cgt-c6000_8.3.1"
-EFFECT_ID = "07000f87"
+EFFECT_ID = "04001787"
 FILENAME = "N2ZBANK"
 MAX_MODELS = 5
 WORDS_PER_MODEL = expected_parameters(3)
@@ -70,7 +70,7 @@ def prepare_bank(models, output: Path) -> Path:
     for source in (SOURCE / "bank_effect.c", KERNEL / "compact_pair.c",
                    KERNEL / "compact_pair.h", KERNEL / "compact_kernel.h"):
         shutil.copyfile(source, output / source.name)
-    icon_name = "nam_a2_zoom_ms50g_plus.png"
+    icon_name = "nam_a2_amp_readable.png"
     shutil.copyfile(SOURCE / "assets" / icon_name, output / icon_name)
     count = len(models)
     selector_labels = [entry[1] for entry in models]
@@ -87,8 +87,13 @@ def prepare_bank(models, output: Path) -> Path:
     (output / "weights.f32").write_bytes(b"".join(entry[2] for entry in models))
     manifest = {
         "name": "N2Z Bank", "filename": FILENAME, "id": EFFECT_ID,
+        # The upstream numeric cutoff predates the local PREAMP NAM range.
+        "allow_any_id": True,
         "version": "0.01", "display": "N2Z Bank", "badge": "BANK",
         "icon_png": icon_name,
+        "icon_frames": [[97, 97], [128, 128]],
+        "icon_trim": True,
+        "icon_stock_knobs": True,
         "description": "Compact NAM bank with two-sample processing.",
         "dspload": 150,
         "kernel": "bank_effect.c", "kernel_section": "text",

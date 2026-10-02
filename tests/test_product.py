@@ -43,7 +43,7 @@ class ProductTests(unittest.TestCase):
             self.assertEqual(data["params"][-1]["max"], 100)
             self.assertEqual(data["params"][-1]["default"], 100)
             self.assertTrue((root / "bank" / "bank_effect.c").is_file())
-            self.assertTrue((root / "bank" / "nam_a2_zoom_ms50g_plus.png").is_file())
+            self.assertTrue((root / "bank" / "nam_a2_amp_readable.png").is_file())
             self.assertIn("#define N2Z_OPTIMIZED_KERNEL 1",
                           (root / "bank/bank_config.h").read_text(encoding="ascii"))
             lock = json.loads((root / "bank/bank.json").read_text(encoding="utf-8"))

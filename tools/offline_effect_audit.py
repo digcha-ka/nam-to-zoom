@@ -42,8 +42,8 @@ def check_zic(data: bytes) -> tuple[bytes | None, list[str]]:
         dimensions.append((width, height))
     if not terminated:
         errors.append("ZIC frame table has no zero terminator")
-    if dimensions != [(72, 97), (102, 128)]:
-        errors.append(f"ZIC frame geometry is {dimensions}, expected two MS Plus frames")
+    if dimensions not in ([(72, 97), (102, 128)], [(97, 97), (128, 128)]):
+        errors.append(f"ZIC frame geometry is {dimensions}, expected DIY or PREAMP frames")
     cursor = 32
     first_bitmap = None
     for index, (width, height) in enumerate(dimensions):
@@ -74,8 +74,8 @@ def audit_bytes(
         errors.append("ZD2 chunk sequence differs from the reviewed MS Plus corpus")
     if zd2.group != (zd2.effect_id >> 24):
         errors.append("effect ID group byte does not match ZD2 group")
-    if not 0x07000F01 <= zd2.effect_id <= 0x07000FEF:
-        errors.append(f"effect ID 0x{zd2.effect_id:08x} is outside the DIY SFX range")
+    if not 0x04001400 <= zd2.effect_id <= 0x040017FF:
+        errors.append(f"effect ID 0x{zd2.effect_id:08x} is outside the local PREAMP NAM range")
     if not zd2.name or len(zd2.name) > 10:
         errors.append("effect name is empty or longer than 10 characters")
     if any(existing_id == zd2.effect_id for existing_id in installed.values()):
