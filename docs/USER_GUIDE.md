@@ -20,6 +20,8 @@ If the Microsoft Visual C++ x64 runtime is missing or too old, the app offers to
 
 Conversion trains a **44.1 kHz, 3-channel, 14-layer** student against the source model. A 48 kHz source is rendered at its native rate and its target audio resampled before training. This is model adaptation, not simply editing the NAM sample-rate field. The source files are never modified.
 
+Each successful conversion is also saved in `Converted_NAM` beside `nam2zoom-desktop.exe`, using the original filename (for example, `Converted_NAM/Marshal_1982_Blabla.nam`). Cached conversions are exported there too. Identical exports are reused; different conversions with the same filename receive numbered suffixes, preserving earlier files. You can keep these NAMs, share them where the source model's license permits, or add them directly to a later bank without retraining. A conversion made with a Cab IR already includes that cab response. Best-effort conversions retain their lower-fidelity result, so compare the audio previews before sharing or using them.
+
 ## Install Or Remove
 
 Before replacing/removing N2Z Bank, disable autosave, select a stock patch, and remove custom effects from saved patches. The safety path checks the current patch and all 100 saved patches and refuses unsafe replacement. It accepts only MS-50G+ firmware 1.40 or MS-70CDR+ firmware 1.20 and detects the model automatically.

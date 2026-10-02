@@ -1163,6 +1163,8 @@ internal sealed class MainForm : Form
                 if (previewLine is null || !Directory.Exists(previewLine[12..]))
                     throw new InvalidDataException($"Adaptation produced no A/B preview for {model.Label}");
                 previews.Add((model.Label, previewLine[12..]));
+                var converted = ConvertedNam.Save(marker[12..], model.Path, AppContext.BaseDirectory);
+                log.AppendText($"Converted NAM saved: {converted}\r\n");
             }
             var args = new List<string> { "build-bank" };
             args.AddRange(resolved);

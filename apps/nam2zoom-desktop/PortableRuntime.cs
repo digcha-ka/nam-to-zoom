@@ -74,9 +74,21 @@ internal static class PortableRuntime
         if (changed) File.WriteAllLines(config, lines);
     }
 
+    private static string TrainingWheel(string root)
+    {
+        var runtime = Path.Combine(root, "runtime");
+        var wheels = Directory.Exists(runtime)
+            ? Directory.GetFiles(runtime, "neural_amp_modeler-*.whl") : [];
+        if (wheels.Length != 1)
+            throw new InvalidOperationException(wheels.Length == 0
+                ? "The portable training wheel is missing. Extract the entire corrected release ZIP to a new folder and retry."
+                : "The portable runtime contains multiple training wheels. Extract the release ZIP to a new folder and retry.");
+        return wheels[0];
+    }
+
     private static string Fingerprint(string root)
     {
-        var wheel = Directory.GetFiles(Path.Combine(root, "runtime"), "neural_amp_modeler-*.whl").Single();
+        var wheel = TrainingWheel(root);
         var constraints = Path.Combine(root, "runtime", "training-constraints.txt");
         return Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(wheel)))
              + Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(constraints)));
@@ -93,6 +105,7 @@ internal static class PortableRuntime
         CancellationToken cancellationToken)
     {
         if (TrainingReady(root)) return;
+        var wheel = TrainingWheel(root);
         var python = Path.Combine(root, "runtime", "python312", "python.exe");
         var venv = Path.Combine(root, ".tooling", "nam-train-venv");
         Directory.CreateDirectory(Path.Combine(root, ".tooling"));
@@ -102,7 +115,6 @@ internal static class PortableRuntime
         await RunAsync(trainer, root, ["-m", "pip", "install", "--only-binary=:all:",
             "--force-reinstall", "--constraint", Path.Combine(root, "runtime", "training-constraints.txt"),
             "torch==2.11.0", "--index-url", index], report, cancellationToken);
-        var wheel = Directory.GetFiles(Path.Combine(root, "runtime"), "neural_amp_modeler-*.whl").Single();
         await RunAsync(trainer, root, ["-m", "pip", "install", "--only-binary=:all:",
             "--constraint", Path.Combine(root, "runtime", "training-constraints.txt"),
             "--index-url", "https://pypi.org/simple", wheel, "soundfile==0.14.0"], report, cancellationToken);

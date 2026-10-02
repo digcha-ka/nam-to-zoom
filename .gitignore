@@ -6,6 +6,7 @@
 **/*.py[cod]
 reference/nam_a2/build-core-ninja/
 Backup/
+Converted_NAM/
 dist/
 release/templates/
 n2z-bank-*/

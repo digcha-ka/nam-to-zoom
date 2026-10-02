@@ -3,10 +3,18 @@ param(
     [string]$Python312,
     [string]$Templates,
     [string]$TrainingWheel,
+    [ValidatePattern('^[A-Za-z0-9-]+$')]
+    [string]$OutputSuffix,
     [switch]$HardwareTestCandidate
 )
 
 $ErrorActionPreference = 'Stop'
+if ($TrainingWheel) {
+    if (-not (Test-Path -LiteralPath $TrainingWheel -PathType Leaf) -or
+        (Split-Path $TrainingWheel -Leaf) -notmatch '^neural_amp_modeler-[^-]+-[^-]+-[^-]+-[^-]+\.whl$') {
+        throw 'Provide an existing neural_amp_modeler wheel with its original package filename.'
+    }
+}
 $root = Split-Path $PSScriptRoot -Parent
 $tooling = Join-Path $root '.tooling'
 [xml]$versionConfig = Get-Content -LiteralPath (Join-Path $root 'Directory.Build.props') -Raw
@@ -15,6 +23,7 @@ if ($releaseVersion -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*
     throw 'Directory.Build.props must specify a version such as 1.0.0 or 1.0.0-preview.1.'
 }
 $name = "nam2zoom-v$releaseVersion-windows-x64"
+if ($OutputSuffix) { $name += "-$OutputSuffix" }
 if ($HardwareTestCandidate) { $name += '-hardware-test-' + (Get-Date -Format 'yyyyMMdd-HHmmss') }
 $dist = Join-Path $root 'dist'
 $payload = Join-Path $dist $name
@@ -136,6 +145,9 @@ if ($TrainingWheel) {
     Run 'uv' @('build', '--wheel', '--out-dir', $runtime, (Join-Path $tooling 'neural-amp-modeler'))
 }
 Copy-Item -LiteralPath (Join-Path $root 'release/training-constraints.txt') -Destination $runtime
+if (@(Get-ChildItem -LiteralPath $runtime -Filter 'neural_amp_modeler-*.whl' -File).Count -ne 1) {
+    throw 'Portable runtime must contain exactly one neural_amp_modeler training wheel.'
+}
 New-Item -ItemType File -Path (Join-Path $runtime 'portable.marker') | Out-Null
 $env:PYTHONPATH = Join-Path $payload 'tools'
 Run (Join-Path $runtime 'python313/python.exe') @('-c', "import mido, rtmidi, construct; from nam2zoom.template import fill_template; print('Portable backend imports OK')")
