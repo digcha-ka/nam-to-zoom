@@ -65,6 +65,13 @@ in place.
   from `apps/nam2zoom-desktop/Assets/TRAINING_DI.wav` (see
   `AppViewModel.ensureBundledTrainingDi()`), verified against the same
   SHA-256 the Windows app checks.
+- Like the Windows app, each successful conversion is exported to
+  `Converted_NAM` beside `nam2zoom.app` (falling back to
+  `~/Library/Application Support/nam2zoom/Converted_NAM` if that location
+  isn't writable), under the original filename: identical exports are
+  reused, different conversions with the same name get " (2)", " (3)", and
+  existing files are never overwritten. Adding one of these back later skips
+  retraining. See `ConvertedNam.swift`.
 - Pedal installation follows the exact same guarded flow as the Windows app
   (build, hash-approve, install, full backup, read-back verification). See
   the repository root [README](../../README.md) and

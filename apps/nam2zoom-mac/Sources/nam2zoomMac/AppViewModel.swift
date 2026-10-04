@@ -547,6 +547,11 @@ final class AppViewModel: ObservableObject {
                     throw SimpleError("Adaptation produced no A/B preview for \(model.label)")
                 }
                 previews.append((model.label, previewDir))
+                let converted = try ConvertedNam.save(
+                    student: URL(fileURLWithPath: String(marker.dropFirst("READY_MODEL=".count))),
+                    original: model.path,
+                    into: ConvertedNam.directory(fallback: appSupportDir))
+                appendLog("Converted NAM saved: \(converted.path)")
             }
 
             var buildArgs = ["build-bank"]
