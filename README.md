@@ -2,12 +2,12 @@
 
 ## Supported Devices
 
-| Zoom pedal | Status |
-| :--- | :--- |
-| **MS-50G+** | **Supported** - tested and working |
+| Zoom pedal    | Status                             |
+| :------------ | :--------------------------------- |
+| **MS-50G+**   | **Supported** - tested and working |
 | **MS-70CDR+** | **Supported** - tested and working |
 
-*More devices to come.*
+_More devices to come._
 
 ---
 
@@ -23,13 +23,17 @@ has also been tested and confirmed working on MS-70CDR+. This is still a
 preview release: new models, devices, saved patches,
 and effect chains require their own checks before you trust them on hardware.
 
+#### N2Z Bank effect location
+
+![n2z bank location in pedal](https://github.com/freelender/nam-to-zoom/blob/main/git-assets/n2z-location.gif?raw=true)
+
 ## Choose Your Path
 
-| Goal | Start here | Tools needed |
-| --- | --- | --- |
-| Use the app | Download the Windows x64 portable ZIP from Releases and read the [User Guide](docs/USER_GUIDE.md) | None beyond the packaged app |
-| Develop or audit | Clone this repository and read the [Development Guide](docs/DEVELOPMENT.md) | .NET SDK, Git, CMake, C++ tools, uv, TI CGT |
-| Package a release | Complete developer setup, then run `.\release\build-portable.ps1` | Full developer setup |
+| Goal              | Start here                                                                                        | Tools needed                                |
+| ----------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Use the app       | Download the Windows x64 portable ZIP from Releases and read the [User Guide](docs/USER_GUIDE.md) | None beyond the packaged app                |
+| Develop or audit  | Clone this repository and read the [Development Guide](docs/DEVELOPMENT.md)                       | .NET SDK, Git, CMake, C++ tools, uv, TI CGT |
+| Package a release | Complete developer setup, then run `.\release\build-portable.ps1`                                 | Full developer setup                        |
 
 ## User Workflow
 
