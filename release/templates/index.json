@@ -2,29 +2,29 @@
   "format": "nam2zoom.templates.v1",
   "banks": {
     "1": {
-      "sha256": "a81077c24536e902b3969e9931b07528c5d9fd67e8e7ac7c45fa2ad33a5f7541",
-      "weights_offset": 11942,
-      "labels_offset": 14582
+      "sha256": "2ebda108b1b82e9648e17aa8d0d7ec189a08f803d462246bda8b16e616599772",
+      "weights_offset": 12267,
+      "labels_offset": 14907
     },
     "2": {
-      "sha256": "9e259900171090aeed9d89efe1173d90885dea371643d2b54ef20ba38a170a65",
-      "weights_offset": 11942,
-      "labels_offset": 17214
+      "sha256": "89ae047710e54896c4524d0edeb267123f7a2386c7630c0662e486da9d5e665c",
+      "weights_offset": 12267,
+      "labels_offset": 17539
     },
     "3": {
-      "sha256": "a427d6d5b114a268e28c21bc98584d87ad3e45aa40dd2ba453033032c58c96fb",
-      "weights_offset": 11910,
-      "labels_offset": 19822
+      "sha256": "d28ea4a961a91266f7cedd0ee0ccd697f23e3d0c2b2137a34310ed586fb8f427",
+      "weights_offset": 12235,
+      "labels_offset": 20147
     },
     "4": {
-      "sha256": "eadff6ca6c36cb89de54976e5e700db43822c3d776d71591e6fbbc4b497a40de",
-      "weights_offset": 11910,
-      "labels_offset": 22454
+      "sha256": "2623927a6e21c22f33e8408654c711f1e7fd0374949cb56e2ae0ea0b9d365871",
+      "weights_offset": 12235,
+      "labels_offset": 22779
     },
     "5": {
-      "sha256": "573a6223594afcbbc0f187c548626b56b9328788533e3b6bb73afb40a8b4a71f",
-      "weights_offset": 11910,
-      "labels_offset": 25094
+      "sha256": "d5ac18cb76beec6be5cd0c1c3f94525bfba390694f8cc574df1530889ca4e5aa",
+      "weights_offset": 12235,
+      "labels_offset": 25419
     }
   },
   "dsp_source_sha256": {
@@ -33,5 +33,5 @@
     "dsp/nam_a2_compact/compact_pair.h": "341cf3cb5e3baffd0292e6bc4fb646ec747681707e3be8084cb060e00c1e0fe0",
     "dsp/nam_a2_compact/compact_kernel.h": "a4132ee3962fe0d8f45cfa9c87fa0479d1a280f2495c022c1c92bb235d955059"
   },
-  "icon_sha256": "59c19e338ddb9bab408752b0c2f016188cd3724e94cfe2ff2c051bb302e697bd"
+  "icon_sha256": "5a8e36db1d3dcd2d49ce7b77e30c362017b6856fb3cd0284b2c2f6afa516baf8"
 }
